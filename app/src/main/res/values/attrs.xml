@@ -1,0 +1,4 @@
+<resources>
+    <attr name="colorNormal" format="color" />
+    <attr name="colorInstall" format="color" />
+</resources>
