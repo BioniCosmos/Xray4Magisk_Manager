@@ -22,7 +22,6 @@ import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.snackbar.Snackbar;
 import io.github.xtls.xray4magisk.App;
-import io.github.xtls.xray4magisk.BuildConfig;
 import io.github.xtls.xray4magisk.ConfigManager;
 import io.github.xtls.xray4magisk.R;
 import io.github.xtls.xray4magisk.ui.activity.AppListActivity;
@@ -60,7 +59,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         this.activity = activity;
         preferences = App.getPreferences();
         pm = activity.getPackageManager();
-        refresh(activity);
+        refresh();
     }
 
     @NonNull
@@ -70,169 +69,8 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         return new ViewHolder(v);
     }
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
-        View root;
-        ImageView appIcon;
-        TextView appName;
-        TextView appDescription;
-        MaterialCheckBox checkBox;
-
-        ViewHolder(View itemView) {
-            super(itemView);
-            root = itemView.findViewById(R.id.item_root);
-            appIcon = itemView.findViewById(R.id.app_icon);
-            appName = itemView.findViewById(R.id.app_name);
-            appDescription = itemView.findViewById(R.id.description);
-            checkBox = itemView.findViewById(R.id.checkbox);
-            checkBox.setVisibility(View.VISIBLE);
-        }
-    }
-
-    @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.root.setAlpha(whiteListMode ? 1.0f : .5f);
-        AppInfo appInfo = showList.get(position);
-        boolean android = appInfo.packageName.equals("android");
-        CharSequence appName;
-        int appId = appInfo.applicationInfo.uid - (appInfo.applicationInfo.uid / 100000) * 100000;
-        appName = String.format("%s (%s)", appInfo.label, appId);
-        holder.appName.setText(appName);
-        GlideApp.with(holder.appIcon)
-                .load(appInfo.packageInfo)
-                .into(new CustomTarget<Drawable>() {
-                    @Override
-                    public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-                        holder.appIcon.setImageDrawable(resource);
-                    }
-
-                    @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {
-
-                    }
-
-                    @Override
-                    public void onLoadFailed(@Nullable Drawable errorDrawable) {
-                        holder.appIcon.setImageDrawable(pm.getDefaultActivityIcon());
-                    }
-                });
-        SpannableStringBuilder sb = new SpannableStringBuilder(android ? "" : activity.getString(R.string.app_description, appInfo.packageName, appInfo.packageInfo.versionName));
-        holder.appDescription.setVisibility(View.VISIBLE);
-        if (android) {
-            holder.appDescription.setVisibility(View.GONE);
-        }
-        holder.appDescription.setText(sb);
-
-        holder.itemView.setOnCreateContextMenuListener((menu, v, menuInfo) -> {
-            activity.getMenuInflater().inflate(R.menu.menu_app_item, menu);
-            if (appId < 10000) {
-                menu.removeItem(R.id.menu_app_store);
-                menu.removeItem(R.id.menu_app_info);
-            }
-        });
-
-        holder.checkBox.setOnCheckedChangeListener(null);
-        holder.checkBox.setChecked(checkedList.contains(appInfo));
-
-        holder.checkBox.setOnCheckedChangeListener((v, isChecked) -> onCheckedChange(v, isChecked, appInfo));
-        holder.itemView.setOnClickListener(v -> holder.checkBox.toggle());
-        holder.itemView.setOnLongClickListener(v -> {
-            selectedInfo = appInfo.applicationInfo;
-            return false;
-        });
-    }
-
-    @Override
-    public long getItemId(int position) {
-        PackageInfo info = showList.get(position).packageInfo;
-        return (info.packageName + "!" + info.applicationInfo.uid / 100000).hashCode();
-    }
-
-    @Override
-    public Filter getFilter() {
-        return new ApplicationFilter();
-    }
-
-    @Override
-    public int getItemCount() {
-        return showList.size();
-    }
-
-    public void refresh(Context context) {
-        synchronized (this) {
-            if (refreshing) {
-                return;
-            }
-            refreshing = true;
-        }
-        // force?
-        activity.binding.progress.setVisibility(View.INVISIBLE);
-        activity.binding.progress.setIndeterminate(true);
-        activity.binding.progress.setVisibility(View.VISIBLE);
-
-        activity.binding.masterSwitch.setOnCheckedChangeListener(null);
-        // TODO: 2021/4/21
-        // whiteListMode = ProxyListUtil.isWhiteListMode
-        activity.binding.masterSwitch.setChecked(whiteListMode);
-        activity.binding.masterSwitch.setOnCheckedChangeListener(switchBarOnCheckedChangeListener);
-        AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> loadApps(context));
-    }
-
-    private class ApplicationFilter extends Filter {
-
-        private boolean lowercaseContains(String s, String filter) {
-            return !TextUtils.isEmpty(s) && s.toLowerCase().contains(filter);
-        }
-
-        @Override
-        protected FilterResults performFiltering(CharSequence constraint) {
-            if (constraint.toString().isEmpty()) {
-                showList = searchList;
-            } else {
-                ArrayList<AppInfo> filtered = new ArrayList<>();
-                String filter = constraint.toString().toLowerCase();
-                for (AppInfo info : searchList) {
-                    if (lowercaseContains(info.label.toString(), filter)
-                            || lowercaseContains(info.packageName, filter)) {
-                        filtered.add(info);
-                    }
-                }
-                showList = filtered;
-            }
-            return null;
-        }
-
-        @Override
-        protected void publishResults(CharSequence constraint, FilterResults results) {
-            notifyDataSetChanged();
-        }
-    }
-
-    public static class AppInfo {
-        public PackageInfo packageInfo;
-        public ApplicationInfo applicationInfo;
-        public String packageName;
-        public CharSequence label = null;
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            AppInfo appInfo = (AppInfo) o;
-            return packageName.equals(appInfo.packageName);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(packageName);
-        }
-    }
-
-    private void loadApps(Context context) {
-        List<PackageInfo> appList = AppHelper.getAppList(context);
+    private void loadApps() {
+        List<PackageInfo> appList = AppHelper.getAppList(activity);
         checkedList.clear();
         searchList.clear();
         showList.clear();
@@ -251,7 +89,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
             appInfo.packageName = info.packageName;
             appInfo.applicationInfo = info.applicationInfo;
             installedList.add(appInfo);
-            if (shouldHideApp(info)) {
+            if (shouldHideApp(appInfo)) {
                 continue;
             }
             searchList.add(appInfo);
@@ -267,20 +105,9 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         activity.onDataReady();
     }
 
-    private boolean shouldHideApp(PackageInfo info) {
-        if (info.packageName.equals(BuildConfig.APPLICATION_ID)) {
-            return true;
-        }
-        if (info.packageName.equals("android")) {
-            return false;
-        }
+    private boolean shouldHideApp(AppInfo info) {
         if (checkedList.contains(info)) {
             return false;
-        }
-        if (!preferences.getBoolean("show_modules", false)) {
-            if (info.applicationInfo.metaData != null && info.applicationInfo.metaData.containsKey("xposedmodule")) {
-                return true;
-            }
         }
         if (!preferences.getBoolean("show_games", false)) {
             if (info.applicationInfo.category == ApplicationInfo.CATEGORY_GAME) {
@@ -295,10 +122,6 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
             return true;
         }
         return !preferences.getBoolean("show_system_apps", false) && (info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
-    }
-
-    public static String getAppLabel(ApplicationInfo info, PackageManager pm) {
-        return info.loadLabel(pm).toString();
     }
 
     private List<AppInfo> sortApps(List<AppInfo> list) {
@@ -324,6 +147,21 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
             }
         });
         return list;
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+        if (itemId == R.id.item_show_system) {
+            item.setChecked(!item.isChecked());
+            preferences.edit().putBoolean("show_system_apps", item.isChecked()).apply();
+        } else if (itemId == R.id.item_show_games) {
+            item.setChecked(!item.isChecked());
+            preferences.edit().putBoolean("show_games", item.isChecked()).apply();
+        } else if (!AppHelper.onOptionsItemSelected(item, preferences)) {
+            return false;
+        }
+        refresh();
+        return true;
     }
 
     public boolean onContextItemSelected(@NonNull MenuItem item) {
@@ -383,6 +221,94 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         }
     }
 
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        holder.root.setAlpha(whiteListMode ? 1.0f : .5f);
+        AppInfo appInfo = showList.get(position);
+        boolean android = appInfo.packageName.equals("android");
+        CharSequence appName;
+        int uid = appInfo.applicationInfo.uid;
+        appName = String.format("%s (%s)", appInfo.label, uid);
+        holder.appName.setText(appName);
+        GlideApp.with(holder.appIcon)
+                .load(appInfo.packageInfo)
+                .into(new CustomTarget<Drawable>() {
+                    @Override
+                    public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                        holder.appIcon.setImageDrawable(resource);
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                    }
+
+                    @Override
+                    public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                        holder.appIcon.setImageDrawable(pm.getDefaultActivityIcon());
+                    }
+                });
+        SpannableStringBuilder sb = new SpannableStringBuilder(android ? "" : activity.getString(R.string.app_description, appInfo.packageName, appInfo.packageInfo.versionName));
+        holder.appDescription.setVisibility(View.VISIBLE);
+        if (android) {
+            holder.appDescription.setVisibility(View.GONE);
+        }
+        holder.appDescription.setText(sb);
+
+        holder.itemView.setOnCreateContextMenuListener((menu, v, menuInfo) -> {
+            activity.getMenuInflater().inflate(R.menu.menu_app_item, menu);
+            if (uid < 10000) {
+                menu.removeItem(R.id.menu_app_info);
+            }
+        });
+
+        holder.checkBox.setOnCheckedChangeListener(null);
+        holder.checkBox.setChecked(checkedList.contains(appInfo));
+
+        holder.checkBox.setOnCheckedChangeListener((v, isChecked) -> onCheckedChange(v, isChecked, appInfo));
+        holder.itemView.setOnClickListener(v -> holder.checkBox.toggle());
+        holder.itemView.setOnLongClickListener(v -> {
+            selectedInfo = appInfo.applicationInfo;
+            return false;
+        });
+    }
+
+    @Override
+    public long getItemId(int position) {
+        PackageInfo info = showList.get(position).packageInfo;
+        return (info.packageName + "!" + info.applicationInfo.uid / 100000).hashCode();
+    }
+
+    @Override
+    public Filter getFilter() {
+        return new ApplicationFilter();
+    }
+
+    @Override
+    public int getItemCount() {
+        return showList.size();
+    }
+
+    public void refresh() {
+        synchronized (this) {
+            if (refreshing) {
+                return;
+            }
+            refreshing = true;
+        }
+        // force?
+        //activity.binding.progress.setVisibility(View.INVISIBLE);
+        //activity.binding.progress.setIndeterminate(true);
+        //activity.binding.progress.setVisibility(View.VISIBLE);
+
+        // TODO: 2021/4/21
+        // whiteListMode = ProxyListUtil.isWhiteListMode
+        activity.binding.masterSwitch.setOnCheckedChangeListener(null);
+        activity.binding.masterSwitch.setChecked(whiteListMode);
+        activity.binding.masterSwitch.setOnCheckedChangeListener(switchBarOnCheckedChangeListener);
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(this::loadApps);
+    }
+
     protected void onCheckedChange(CompoundButton buttonView, boolean isChecked, AppInfo appInfo) {
         if (isChecked) {
             checkedList.add(appInfo);
@@ -400,18 +326,79 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         }
     }
 
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int itemId = item.getItemId();
-        if (itemId == R.id.item_show_system) {
-            item.setChecked(!item.isChecked());
-            preferences.edit().putBoolean("show_system_apps", item.isChecked()).apply();
-        } else if (itemId == R.id.item_show_games) {
-            item.setChecked(!item.isChecked());
-            preferences.edit().putBoolean("show_games", item.isChecked()).apply();
-        } else if (!AppHelper.onOptionsItemSelected(item, preferences)) {
-            return false;
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        View root;
+        ImageView appIcon;
+        TextView appName;
+        TextView appDescription;
+        MaterialCheckBox checkBox;
+
+        ViewHolder(View itemView) {
+            super(itemView);
+            root = itemView.findViewById(R.id.item_root);
+            appIcon = itemView.findViewById(R.id.app_icon);
+            appName = itemView.findViewById(R.id.app_name);
+            appDescription = itemView.findViewById(R.id.description);
+            checkBox = itemView.findViewById(R.id.checkbox);
+            checkBox.setVisibility(View.VISIBLE);
         }
-        refresh(activity);
-        return true;
+    }
+
+    private class ApplicationFilter extends Filter {
+
+        private boolean lowercaseContains(String s, String filter) {
+            return !TextUtils.isEmpty(s) && s.toLowerCase().contains(filter);
+        }
+
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+            if (constraint.toString().isEmpty()) {
+                showList = searchList;
+            } else {
+                ArrayList<AppInfo> filtered = new ArrayList<>();
+                String filter = constraint.toString().toLowerCase();
+                for (AppInfo info : searchList) {
+                    if (lowercaseContains(info.label.toString(), filter)
+                            || lowercaseContains(info.packageName, filter)) {
+                        filtered.add(info);
+                    }
+                }
+                showList = filtered;
+            }
+            return null;
+        }
+
+        @Override
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            notifyDataSetChanged();
+        }
+    }
+
+    public static String getAppLabel(ApplicationInfo info, PackageManager pm) {
+        return info.loadLabel(pm).toString();
+    }
+
+    public static class AppInfo {
+        public PackageInfo packageInfo;
+        public ApplicationInfo applicationInfo;
+        public String packageName;
+        public CharSequence label = null;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            AppInfo appInfo = (AppInfo) o;
+            return packageName.equals(appInfo.packageName);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(packageName);
+        }
     }
 }

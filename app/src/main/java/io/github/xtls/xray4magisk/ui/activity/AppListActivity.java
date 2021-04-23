@@ -1,7 +1,11 @@
 package io.github.xtls.xray4magisk.ui.activity;
 
 import android.os.Bundle;
-import android.widget.SearchView;
+import android.view.Menu;
+import android.view.MenuItem;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
+import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.ActionBar;
 import com.google.android.material.snackbar.Snackbar;
@@ -21,7 +25,7 @@ public class AppListActivity extends BaseActivity {
     public ActivityAppListBinding binding;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding=ActivityAppListBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -39,7 +43,37 @@ public class AppListActivity extends BaseActivity {
         binding.recyclerView.setLayoutManager(new LinearLayoutManagerFix(this));
         RecyclerViewKt.addFastScroller(binding.recyclerView,binding.recyclerView);
         RecyclerViewKt.fixEdgeEffect(binding.recyclerView, false, true);
-        binding.swipeRefreshLayout.setOnRefreshListener(() -> appListAdapter.refresh(this));
+        binding.swipeRefreshLayout.setOnRefreshListener(() -> appListAdapter.refresh());
+
+        searchListener = new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                appListAdapter.getFilter().filter(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                appListAdapter.getFilter().filter(newText);
+                return false;
+            }
+        };
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (appListAdapter.onOptionsItemSelected(item)) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(@NonNull Menu menu) {
+        appListAdapter.onCreateOptionsMenu(menu, getMenuInflater());
+        searchView = (SearchView) menu.findItem(R.id.menu_search).getActionView();
+        searchView.setOnQueryTextListener(searchListener);
+        return super.onCreateOptionsMenu(menu);
     }
 
     public void onDataReady() {
@@ -49,6 +83,14 @@ public class AppListActivity extends BaseActivity {
             String queryStr = searchView != null ? searchView.getQuery().toString() : "";
             appListAdapter.getFilter().filter(queryStr);
         });
+    }
+
+    @Override
+    public boolean onContextItemSelected(@NonNull MenuItem item) {
+        if (appListAdapter.onContextItemSelected(item)) {
+            return true;
+        }
+        return super.onContextItemSelected(item);
     }
 
     public void makeSnackBar(String text, @Snackbar.Duration int duration) {
