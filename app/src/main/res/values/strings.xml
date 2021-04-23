@@ -29,9 +29,9 @@
     <string name="enable_whitelist">Whitelist Mode</string>
     <string name="applist_title">App List</string>
     <string name="applist_subtitle">Select app to proxy</string>
-    <string name="android_framework">Android Framework</string>
     <string name="app_description">%s\nVersion %s</string>
     <string name="applist_app_store">View in App Store</string>
     <string name="applist_app_info">App info</string>
+    <string name="failed_to_save_proxy_list">Failed to save proxy app list</string>
 
 </resources>
