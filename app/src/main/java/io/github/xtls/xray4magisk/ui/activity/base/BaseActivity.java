@@ -6,8 +6,10 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Window;
+import androidx.annotation.NonNull;
 import io.github.xtls.xray4magisk.R;
 import io.github.xtls.xray4magisk.ConfigManager;
+import io.github.xtls.xray4magisk.util.MagiskHelper;
 import io.github.xtls.xray4magisk.util.NavUtil;
 import io.github.xtls.xray4magisk.util.theme.ThemeUtil;
 import rikka.core.res.ResourcesKt;
@@ -15,10 +17,9 @@ import rikka.material.app.MaterialActivity;
 
 public class BaseActivity extends MaterialActivity {
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@NonNull Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        String moduleVersionCode = ConfigManager.getModuleVersionCode();
+        String moduleVersionCode = ConfigManager.getModuleVersionCode(getString(R.string.module_dir_name));
         if ("".equals(moduleVersionCode)) {
             // module install check
             new AlertDialog.Builder(this)

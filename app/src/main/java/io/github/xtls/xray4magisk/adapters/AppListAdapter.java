@@ -16,6 +16,7 @@ import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.request.target.CustomTarget;
@@ -29,6 +30,7 @@ import io.github.xtls.xray4magisk.R;
 import io.github.xtls.xray4magisk.ui.activity.AppListActivity;
 import io.github.xtls.xray4magisk.util.GlideApp;
 
+import io.github.xtls.xray4magisk.util.ProxyListUtil;
 import rikka.widget.switchbar.SwitchBar;
 
 import java.util.*;
@@ -46,10 +48,11 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
     private final SwitchBar.OnCheckedChangeListener switchBarOnCheckedChangeListener = new SwitchBar.OnCheckedChangeListener() {
         @Override
         public boolean onCheckedChanged(SwitchBar view, boolean isChecked) {
-            // ProxyListUtil
-            // TODO: 2021/4/21
-            whiteListMode=isChecked;
+            whiteListMode = isChecked;
             notifyDataSetChanged();
+            if (!ConfigManager.setProxyList(checkedList, whiteListMode)) {
+                activity.makeSnackBar(R.string.failed_to_save_proxy_list, Snackbar.LENGTH_SHORT);
+            }
             return true;
         }
     };
@@ -77,10 +80,8 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         checkedList.clear();
         searchList.clear();
         showList.clear();
-
-        checkedList.addAll(ConfigManager.getProxyList());
+        HashSet<Integer> proxyList = ConfigManager.getProxyList();
         HashSet<AppInfo> installedList = new HashSet<>();
-        boolean emptyCheckedList = checkedList.isEmpty();
         for (PackageInfo info : appList) {
             int uid = info.applicationInfo.uid;
             if (info.packageName.equals("android") && uid / 100000 != 0) {
@@ -92,15 +93,19 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
             appInfo.packageName = info.packageName;
             appInfo.applicationInfo = info.applicationInfo;
             installedList.add(appInfo);
+            if (proxyList.contains(uid)) {
+                checkedList.add(appInfo);
+            }
             if (shouldHideApp(appInfo)) {
                 continue;
             }
             searchList.add(appInfo);
         }
+        //boolean emptyCheckedList = checkedList.isEmpty();
         checkedList.retainAll(installedList);
-        if (emptyCheckedList) {
-            ConfigManager.setProxyList(checkedList, whiteListMode);
-        }
+        //if (emptyCheckedList) {
+        //    ConfigManager.setProxyList(checkedList, whiteListMode);
+        //}
         showList = sortApps(searchList);
         synchronized (this) {
             refreshing = false;
@@ -226,7 +231,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.root.setAlpha(whiteListMode ? 1.0f : .5f);
+        holder.root.setAlpha(1.0f);
         AppInfo appInfo = showList.get(position);
         boolean android = appInfo.packageName.equals("android");
         CharSequence appName;
@@ -261,15 +266,15 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         holder.itemView.setOnCreateContextMenuListener((menu, v, menuInfo) -> {
             activity.getMenuInflater().inflate(R.menu.menu_app_item, menu);
             if (uid < 10000) {
-                menu.removeItem(R.id.menu_app_info);
+                menu.removeItem(R.id.menu_app_store);
             }
         });
 
-        holder.checkBox.setOnCheckedChangeListener(null);
-        holder.checkBox.setChecked(checkedList.contains(appInfo));
+        holder.checkbox.setOnCheckedChangeListener(null);
+        holder.checkbox.setChecked(checkedList.contains(appInfo));
 
-        holder.checkBox.setOnCheckedChangeListener((v, isChecked) -> onCheckedChange(v, isChecked, appInfo));
-        holder.itemView.setOnClickListener(v -> holder.checkBox.toggle());
+        holder.checkbox.setOnCheckedChangeListener((v, isChecked) -> onCheckedChange(v, isChecked, appInfo));
+        holder.itemView.setOnClickListener(v -> holder.checkbox.toggle());
         holder.itemView.setOnLongClickListener(v -> {
             selectedInfo = appInfo.applicationInfo;
             return false;
@@ -304,8 +309,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         activity.binding.progress.setIndeterminate(true);
         activity.binding.progress.setVisibility(View.VISIBLE);
 
-        // TODO: 2021/4/21
-        // whiteListMode = ProxyListUtil.isWhiteListMode
+        whiteListMode = ProxyListUtil.isWhiteListMode();
         activity.binding.masterSwitch.setOnCheckedChangeListener(null);
         activity.binding.masterSwitch.setChecked(whiteListMode);
         activity.binding.masterSwitch.setOnCheckedChangeListener(switchBarOnCheckedChangeListener);
@@ -334,7 +338,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         ImageView appIcon;
         TextView appName;
         TextView appDescription;
-        MaterialCheckBox checkBox;
+        MaterialCheckBox checkbox;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -342,8 +346,8 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
             appIcon = itemView.findViewById(R.id.app_icon);
             appName = itemView.findViewById(R.id.app_name);
             appDescription = itemView.findViewById(R.id.description);
-            checkBox = itemView.findViewById(R.id.checkbox);
-            checkBox.setVisibility(View.VISIBLE);
+            checkbox = itemView.findViewById(R.id.checkbox);
+            checkbox.setVisibility(View.VISIBLE);
         }
     }
 
@@ -375,6 +379,17 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         protected void publishResults(CharSequence constraint, FilterResults results) {
             notifyDataSetChanged();
         }
+    }
+
+    public boolean onBackPressed() {
+        if (ConfigManager.isProxying()) {
+            if (!ConfigManager.renewTproxy()) {
+                Toast.makeText(activity, activity.getString(R.string.failed_to_renew_tproxy_rules), Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(activity, activity.getString(R.string.succeeded_to_renew_tproxy_rules), Toast.LENGTH_LONG).show();
+            }
+        }
+        return true;
     }
 
     public static String getAppLabel(ApplicationInfo info, PackageManager pm) {

@@ -5,6 +5,7 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.Filterable;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,7 +22,7 @@ public abstract class ListActivity extends BaseActivity {
     private BaseAdapter<?> adapter = null;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@NonNull Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityListBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());

@@ -19,14 +19,7 @@ public class ExampleUnitTest {
     }
 
     @Test
-    public void testDate() {
-        SimpleDateFormat date = new SimpleDateFormat("yyyyMMdd");
-        try {
-            Date test = date.parse("20210414");
-            System.out.println(date.format(test));
-        } catch (java.text.ParseException e) {
-
-        }
-
+    public void test() {
+        System.out.println("cat /data/adb/modules/"+"xxx"+"/module.prop | grep '^versionCode=' | grep '[0-9]\\{1,\\}'");
     }
 }

@@ -25,7 +25,7 @@ public class AppListActivity extends BaseActivity {
     public ActivityAppListBinding binding;
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding=ActivityAppListBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -39,6 +39,7 @@ public class AppListActivity extends BaseActivity {
         bar.setSubtitle(R.string.applist_subtitle);
         appListAdapter = new AppListAdapter(this);
         appListAdapter.setHasStableIds(true);
+        binding.recyclerView.setAdapter(appListAdapter);
         binding.recyclerView.setHasFixedSize(true);
         binding.recyclerView.setLayoutManager(new LinearLayoutManagerFix(this));
         RecyclerViewKt.addFastScroller(binding.recyclerView,binding.recyclerView);
@@ -91,6 +92,13 @@ public class AppListActivity extends BaseActivity {
             return true;
         }
         return super.onContextItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (appListAdapter.onBackPressed()) {
+            super.onBackPressed();
+        }
     }
 
     public void makeSnackBar(String text, @Snackbar.Duration int duration) {
