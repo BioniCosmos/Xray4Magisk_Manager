@@ -9,14 +9,24 @@ public class ProxyListUtil {
     }
 
     public static HashSet<Integer> getAppidList() {
+        HashSet<Integer> s = new HashSet<>();
         String cmd = "cat /data/adb/xray/appid.list | grep -vE 'pick|bypass|ALL'";
         String result = MagiskHelper.execRootCmd(cmd);
+        if("".equals(result)){
+            return s;
+        }
         String[] appIds = result.split("\\s+");
-        HashSet<Integer> s = new HashSet<>();
         for (String i : appIds) {
             s.add(Integer.parseInt(i));
         }
         return s;
+    }
+
+    public static boolean setAppidList() {
+        if (MagiskHelper.execRootCmdSilent("echo ALL" + " > /data/adb/xray/appid.list") == -1) {
+            return false;
+        }
+        return true;
     }
 
     public static boolean setAppidList(HashSet<Integer> s, String mode) {

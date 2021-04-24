@@ -12,7 +12,8 @@ public class ConfigManager {
         if (MagiskHelper.isMagiskLite) {
             cmd = "cat /data/adb/lite_modules/" + moduleDir + "/module.prop | grep '^versionCode='";
         }
-        return MagiskHelper.execRootCmd(cmd).split("=")[1];
+        String result = MagiskHelper.execRootCmd(cmd);
+        return "".equals(result) ? "" : result.split("=")[1];
     }
 
     public static String getModuleVersion(String moduleDir) {
@@ -20,11 +21,15 @@ public class ConfigManager {
         if (MagiskHelper.isMagiskLite) {
             cmd = "cat /data/adb/lite_modules/" + moduleDir + "/module.prop | grep '^version='";
         }
-        return MagiskHelper.execRootCmd(cmd).split("=")[1];
+        String result = MagiskHelper.execRootCmd(cmd);
+        return "".equals(result) ? "" : result.split("=")[1];
     }
 
     public static boolean setProxyList(HashSet<AppListAdapter.AppInfo> checkedList, boolean whiteListMode) {
         HashSet<Integer> s = new HashSet<>();
+        if(checkedList.isEmpty()){
+            return ProxyListUtil.setAppidList();
+        }
         for (AppListAdapter.AppInfo info : checkedList) {
             s.add(info.applicationInfo.uid);
         }

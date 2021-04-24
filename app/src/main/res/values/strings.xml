@@ -24,6 +24,7 @@
     <!-- Main Activity -->
     <string name="enabled">Enabled</string>
     <string name="disabled">Disabled</string>
+    <string name="install_required">Module install is required</string>
     <string name="Apps">Apps</string>
     <string name="Logs">Logs</string>
     <string name="Settings">Settings</string>
