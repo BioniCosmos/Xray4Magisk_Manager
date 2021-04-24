@@ -1,7 +1,6 @@
 package io.github.xtls.xray4magisk.adapters;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
@@ -14,18 +13,22 @@ import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.view.*;
 import android.widget.*;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.snackbar.Snackbar;
+
 import io.github.xtls.xray4magisk.App;
 import io.github.xtls.xray4magisk.ConfigManager;
 import io.github.xtls.xray4magisk.R;
 import io.github.xtls.xray4magisk.ui.activity.AppListActivity;
 import io.github.xtls.xray4magisk.util.GlideApp;
+
 import rikka.widget.switchbar.SwitchBar;
 
 import java.util.*;
@@ -276,7 +279,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
     @Override
     public long getItemId(int position) {
         PackageInfo info = showList.get(position).packageInfo;
-        return (info.packageName + "!" + info.applicationInfo.uid / 100000).hashCode();
+        return (info.packageName + "!" + info.applicationInfo.uid).hashCode();
     }
 
     @Override
@@ -297,9 +300,9 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
             refreshing = true;
         }
         // force?
-        //activity.binding.progress.setVisibility(View.INVISIBLE);
-        //activity.binding.progress.setIndeterminate(true);
-        //activity.binding.progress.setVisibility(View.VISIBLE);
+        activity.binding.progress.setVisibility(View.INVISIBLE);
+        activity.binding.progress.setIndeterminate(true);
+        activity.binding.progress.setVisibility(View.VISIBLE);
 
         // TODO: 2021/4/21
         // whiteListMode = ProxyListUtil.isWhiteListMode
