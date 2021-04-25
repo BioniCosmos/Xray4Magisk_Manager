@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Xray4Magisk</string>
     <string name="module_dir_name">xray4magisk</string>
-    <string name="app_version">0.0.1-preview</string>
+    <string name="app_version">0.0.1</string>
     <!-- BaseActivity -->
     <string name="min_module_version">20210419</string>
     <string name="need_install_module">Please install the Xray4Magisk magisk module first!</string>
@@ -29,12 +29,13 @@
     <string name="Logs">Logs</string>
     <string name="Settings">Settings</string>
     <string name="About">About</string>
+    <string name="app_count_in_list">Added %d in App list</string>
 
     <!-- AppList Activity -->
     <string name="enable_whitelist">Whitelist Mode</string>
     <string name="applist_title">App List</string>
-    <string name="applist_subtitle">Select app to proxy/bypass</string>
-    <string name="app_description">%s\nVersion %s</string>
+    <string name="applist_subtitle">Select app to bypass/proxy</string>
+    <string name="app_description">%s\nVersion: %s</string>
     <string name="applist_app_store">View in App Store</string>
     <string name="applist_app_info">App info</string>
     <string name="failed_to_save_proxy_list">Failed to save proxy app list</string>

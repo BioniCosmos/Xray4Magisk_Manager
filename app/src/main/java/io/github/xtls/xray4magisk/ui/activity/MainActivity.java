@@ -24,46 +24,52 @@ public class MainActivity extends BaseActivity {
         binding.proxy.setOnClickListener(v -> {
             if (ConfigManager.isProxying()) {
                 ConfigManager.stopProxy();
+                setProxyCard("disabled");
             } else {
                 ConfigManager.startProxy();
+                setProxyCard("enabled");
             }
-            setProxyCard();
         });
         binding.apps.setOnClickListener(new StartActivityListener(AppListActivity.class));
-        binding.about.setOnClickListener(v -> {
-            new AlertDialog.Builder(this)
-                    .setMessage(R.string.app_version)
-                    .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    })
-                    .show();
-        });
+        binding.about.setOnClickListener(v -> new AlertDialog.Builder(this)
+                .setMessage(R.string.app_version)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                })
+                .show());
         Glide.with(binding.appIcon)
                 .load(GlideHelper.wrapApplicationInfoForIconLoader(getApplicationInfo()))
                 .into(binding.appIcon);
         if ("".equals(ConfigManager.getModuleVersionCode(getString(R.string.module_dir_name)))) {
-            int cardBackgroundColor;
-            cardBackgroundColor = ResourcesKt.resolveColor(getTheme(), R.attr.colorWarning);
-            binding.statusTitle.setText(R.string.disabled);
-            binding.statusIcon.setImageResource(R.drawable.ic_info);
-            binding.statusSummary.setText(R.string.install_required);
-            binding.proxy.setCardBackgroundColor(cardBackgroundColor);
+            setProxyCard("");
+        } else if (ConfigManager.isProxying()) {
+            setProxyCard("enabled");
+            binding.appsSummary.setText(String.format(getString(R.string.app_count_in_list), ConfigManager.getProxyList().size()));
         } else {
-            setProxyCard();
+            setProxyCard("disabled");
+            binding.appsSummary.setText(String.format(getString(R.string.app_count_in_list), ConfigManager.getProxyList().size()));
         }
     }
 
-    private void setProxyCard() {
+    private void setProxyCard(String status) {
         int cardBackgroundColor;
-        if (ConfigManager.isProxying()) {
-            cardBackgroundColor = ResourcesKt.resolveColor(getTheme(), R.attr.colorAccent);
-            binding.statusTitle.setText(R.string.enabled);
-            binding.statusIcon.setImageResource(R.drawable.ic_check_circle);
-            binding.statusSummary.setText(ConfigManager.getModuleVersion(getString(R.string.module_dir_name)));
-        } else {
-            binding.statusTitle.setText(R.string.disabled);
-            cardBackgroundColor = ResourcesKt.resolveColor(getTheme(), R.attr.colorInactive);
-            binding.statusIcon.setImageResource(R.drawable.ic_info);
-            binding.statusSummary.setText(ConfigManager.getModuleVersion(getString(R.string.module_dir_name)));
+        switch (status) {
+            case "enabled":
+                cardBackgroundColor = ResourcesKt.resolveColor(getTheme(), R.attr.colorAccent);
+                binding.statusTitle.setText(R.string.enabled);
+                binding.statusIcon.setImageResource(R.drawable.ic_check_circle);
+                binding.statusSummary.setText(ConfigManager.getModuleVersion(getString(R.string.module_dir_name)));
+                break;
+            case "disabled":
+                binding.statusTitle.setText(R.string.disabled);
+                cardBackgroundColor = ResourcesKt.resolveColor(getTheme(), R.attr.colorInactive);
+                binding.statusIcon.setImageResource(R.drawable.ic_error);
+                binding.statusSummary.setText(ConfigManager.getModuleVersion(getString(R.string.module_dir_name)));
+                break;
+            default:
+                cardBackgroundColor = ResourcesKt.resolveColor(getTheme(), R.attr.colorWarning);
+                binding.statusTitle.setText(R.string.disabled);
+                binding.statusIcon.setImageResource(R.drawable.ic_info);
+                binding.statusSummary.setText(R.string.install_required);
         }
         binding.proxy.setCardBackgroundColor(cardBackgroundColor);
     }
@@ -81,5 +87,11 @@ public class MainActivity extends BaseActivity {
             intent.setClass(MainActivity.this, clazz);
             startActivity(intent);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        binding.appsSummary.setText(String.format(getString(R.string.app_count_in_list), ConfigManager.getProxyList().size()));
     }
 }

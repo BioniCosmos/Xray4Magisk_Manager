@@ -1,18 +1,19 @@
-package io.github.xtls.xray4magisk.util;
+package io.github.xtls.xray4magisk.util.module;
+
+import io.github.xtls.xray4magisk.util.MagiskHelper;
 
 import java.util.HashSet;
 
-public class ProxyListUtil {
+public class ProxyUtil {
     public static boolean isWhiteListMode() {
-        String cmd = "cat /data/adb/xray/appid.list | grep -o 'pick'";
-        return "pick".equals(MagiskHelper.execRootCmd(cmd));
+        return "pick".equals(MagiskHelper.execRootCmd("cat /data/adb/xray/appid.list | grep -o 'pick'"));
     }
 
     public static HashSet<Integer> getAppidList() {
         HashSet<Integer> s = new HashSet<>();
         String cmd = "cat /data/adb/xray/appid.list | grep -vE 'pick|bypass|ALL'";
         String result = MagiskHelper.execRootCmd(cmd);
-        if("".equals(result)){
+        if ("".equals(result)) {
             return s;
         }
         String[] appIds = result.split("\\s+");
@@ -23,22 +24,17 @@ public class ProxyListUtil {
     }
 
     public static boolean setAppidList() {
-        if (MagiskHelper.execRootCmdSilent("echo ALL" + " > /data/adb/xray/appid.list") == -1) {
-            return false;
-        }
-        return true;
+        return MagiskHelper.execRootCmdSilent("echo ALL" + " > /data/adb/xray/appid.list") != -1;
     }
 
     public static boolean setAppidList(HashSet<Integer> s, String mode) {
-        if (MagiskHelper.execRootCmdSilent("echo " + mode + " > /data/adb/xray/appid.list") == -1) {
-            return false;
-        }
+        StringBuilder cmd = new StringBuilder("echo \"");
+        cmd.append(mode).append("\\n");
         for (int i : s) {
-            if (MagiskHelper.execRootCmdSilent("echo " + i + " >> /data/adb/xray/appid.list") == -1) {
-                return false;
-            }
+            cmd.append(i).append("\\n");
         }
-        return true;
+        cmd.append("\" > /data/adb/xray/appid.list");
+        return MagiskHelper.execRootCmdSilent(cmd.toString().trim()) != -1;
     }
 
     public static boolean restartXrayService() {
@@ -82,10 +78,6 @@ public class ProxyListUtil {
     }
 
     public static boolean isProxying() {
-        String cmd = "if [ -f /data/adb/modules/xray4magisk/disable ] ; then exit 1;fi";
-        if (MagiskHelper.isMagiskLite) {
-            cmd = "if [ -f /data/adb/lite_modules/xray4magisk/disable ] ; then exit 1;fi";
-        }
-        return MagiskHelper.execRootCmdSilent(cmd) != 1;
+        return MagiskHelper.execRootCmdSilent("if [ -f /data/adb/xray/run/xray.pid ] ; then exit 1;fi") == 1;
     }
 }

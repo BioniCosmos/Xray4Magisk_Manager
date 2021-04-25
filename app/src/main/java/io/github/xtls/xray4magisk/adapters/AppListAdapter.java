@@ -16,7 +16,6 @@ import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.request.target.CustomTarget;
@@ -30,7 +29,7 @@ import io.github.xtls.xray4magisk.R;
 import io.github.xtls.xray4magisk.ui.activity.AppListActivity;
 import io.github.xtls.xray4magisk.util.GlideApp;
 
-import io.github.xtls.xray4magisk.util.ProxyListUtil;
+import io.github.xtls.xray4magisk.util.module.ProxyUtil;
 import rikka.widget.switchbar.SwitchBar;
 
 import java.util.*;
@@ -84,7 +83,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         HashSet<AppInfo> installedList = new HashSet<>();
         for (PackageInfo info : appList) {
             int uid = info.applicationInfo.uid;
-            if (info.packageName.equals("android") && uid / 100000 != 0) {
+            if (uid / 100000 != 0) {
                 continue;
             }
             AppInfo appInfo = new AppInfo();
@@ -101,11 +100,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
             }
             searchList.add(appInfo);
         }
-        //boolean emptyCheckedList = checkedList.isEmpty();
         checkedList.retainAll(installedList);
-        //if (emptyCheckedList) {
-        //    ConfigManager.setProxyList(checkedList, whiteListMode);
-        //}
         showList = sortApps(searchList);
         synchronized (this) {
             refreshing = false;
@@ -309,7 +304,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         activity.binding.progress.setIndeterminate(true);
         activity.binding.progress.setVisibility(View.VISIBLE);
 
-        whiteListMode = ProxyListUtil.isWhiteListMode();
+        whiteListMode = ProxyUtil.isWhiteListMode();
         activity.binding.masterSwitch.setOnCheckedChangeListener(null);
         activity.binding.masterSwitch.setChecked(whiteListMode);
         activity.binding.masterSwitch.setOnCheckedChangeListener(switchBarOnCheckedChangeListener);
@@ -318,9 +313,15 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
 
     protected void onCheckedChange(CompoundButton buttonView, boolean isChecked, AppInfo appInfo) {
         if (isChecked) {
-            checkedList.add(appInfo);
+            int uid=appInfo.applicationInfo.uid;
+            for(AppInfo i:showList){
+                if(i.applicationInfo.uid==uid){
+                    checkedList.add(i);
+                }
+            }
         } else {
-            checkedList.remove(appInfo);
+            int uid=appInfo.applicationInfo.uid;
+            checkedList.removeIf(i -> i.applicationInfo.uid == uid);
         }
         if (!ConfigManager.setProxyList(checkedList, whiteListMode)) {
             activity.makeSnackBar(R.string.failed_to_save_proxy_list, Snackbar.LENGTH_SHORT);

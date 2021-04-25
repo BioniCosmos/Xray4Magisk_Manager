@@ -10,7 +10,6 @@ public final class MagiskHelper {
     private static final String TAG = "Xray4Magisk.MagiskHelper";
     public static boolean isMagiskLite = "lite".equals(MagiskHelper.execRootCmd("magisk -v | grep -o lite"));
 
-
     public static String execRootCmd(String cmd) {
         StringBuilder result = new StringBuilder();
         DataOutputStream dos = null;

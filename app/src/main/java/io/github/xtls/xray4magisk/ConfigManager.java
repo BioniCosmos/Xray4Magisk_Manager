@@ -2,7 +2,7 @@ package io.github.xtls.xray4magisk;
 
 import io.github.xtls.xray4magisk.adapters.AppListAdapter;
 import io.github.xtls.xray4magisk.util.MagiskHelper;
-import io.github.xtls.xray4magisk.util.ProxyListUtil;
+import io.github.xtls.xray4magisk.util.module.ProxyUtil;
 
 import java.util.HashSet;
 
@@ -28,31 +28,31 @@ public class ConfigManager {
     public static boolean setProxyList(HashSet<AppListAdapter.AppInfo> checkedList, boolean whiteListMode) {
         HashSet<Integer> s = new HashSet<>();
         if(checkedList.isEmpty()){
-            return ProxyListUtil.setAppidList();
+            return ProxyUtil.setAppidList();
         }
         for (AppListAdapter.AppInfo info : checkedList) {
             s.add(info.applicationInfo.uid);
         }
-        return whiteListMode ? ProxyListUtil.setAppidList(s, "pick") : ProxyListUtil.setAppidList(s, "bypass");
+        return whiteListMode ? ProxyUtil.setAppidList(s, "pick") : ProxyUtil.setAppidList(s, "bypass");
     }
 
     public static HashSet<Integer> getProxyList() {
-        return ProxyListUtil.getAppidList();
+        return ProxyUtil.getAppidList();
     }
 
     public static boolean renewTproxy() {
-        return ProxyListUtil.renewTproxy();
+        return ProxyUtil.renewTproxy();
     }
 
     public static boolean isProxying() {
-        return ProxyListUtil.isProxying();
+        return ProxyUtil.isProxying();
     }
 
     public static boolean startProxy() {
-        return ProxyListUtil.start();
+        return ProxyUtil.start();
     }
 
     public static boolean stopProxy() {
-        return ProxyListUtil.stop();
+        return ProxyUtil.stop();
     }
 }

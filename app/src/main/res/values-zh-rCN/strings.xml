@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <!-- BaseActivity -->
+    <string name="need_install_module">请先安装 Xray4Magisk 模块!</string>
+    <string name="need_update_module">请先升级 Xray4Magisk 模块至少到 %s 版本!</string>
+
+    <!-- App list -->
+    <string name="menu_show_games">游戏</string>
+    <string name="menu_show_system_apps">系统应用</string>
+    <string name="menu_sort">排序…</string>
+    <string name="sort_by_name">应用名称</string>
+    <string name="sort_by_name_reverse">应用名称（降序）</string>
+    <string name="sort_by_package_name">应用包名</string>
+    <string name="sort_by_package_name_reverse">应用包名（降序）</string>
+    <string name="sort_by_install_time">安装时间</string>
+    <string name="sort_by_install_time_reverse">安装时间（降序）</string>
+    <string name="sort_by_update_time">更新时间</string>
+    <string name="sort_by_update_time_reverse">更新时间（降序）</string>
+
+    <!-- Main Activity -->
+    <string name="enabled">运行中</string>
+    <string name="disabled">已停止</string>
+    <string name="install_required">Xray4Magisk 模块需要安装</string>
+    <string name="Apps">代理名单</string>
+    <string name="Logs">日志</string>
+    <string name="Settings">设置</string>
+    <string name="About">关于</string>
+    <string name="app_count_in_list">%d 应用ID位于代理名单</string>
+
+    <!-- AppList Activity -->
+    <string name="enable_whitelist">白名单模式</string>
+    <string name="applist_title">应用列表</string>
+    <string name="applist_subtitle">选择需要（绕过/代理）的应用</string>
+    <string name="app_description">%s\n版本： %s</string>
+    <string name="applist_app_store">在应用商店查看</string>
+    <string name="applist_app_info">应用详细</string>
+    <string name="failed_to_save_proxy_list">保存代理名单失败！</string>
+    <string name="failed_to_renew_tproxy_rules">刷新透明代理规则失败！</string>
+    <string name="succeeded_to_renew_tproxy_rules">刷新透明代理规则成功！</string>
+
+</resources>
