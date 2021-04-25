@@ -1,7 +1,6 @@
 <resources>
     <string name="app_name">Xray4Magisk</string>
-    <string name="module_dir_name">xray4magisk</string>
-    <string name="app_version">0.0.1</string>
+    <string name="app_version">0.0.2</string>
     <!-- BaseActivity -->
     <string name="min_module_version">20210419</string>
     <string name="need_install_module">Please install the Xray4Magisk magisk module first!</string>
@@ -29,7 +28,9 @@
     <string name="Logs">Logs</string>
     <string name="Settings">Settings</string>
     <string name="About">About</string>
-    <string name="app_count_in_list">Added %d in App list</string>
+    <string name="app_count_in_list">Added %d AppID in %s</string>
+    <string name="whitelist">Whitelist</string>
+    <string name="blacklist">Blacklist</string>
 
     <!-- AppList Activity -->
     <string name="enable_whitelist">Whitelist Mode</string>

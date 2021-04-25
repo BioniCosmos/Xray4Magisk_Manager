@@ -9,18 +9,24 @@ import android.view.Window;
 import androidx.annotation.NonNull;
 import io.github.xtls.xray4magisk.R;
 import io.github.xtls.xray4magisk.ConfigManager;
-import io.github.xtls.xray4magisk.util.MagiskHelper;
 import io.github.xtls.xray4magisk.util.NavUtil;
+import io.github.xtls.xray4magisk.util.module.ProxyUtil;
 import io.github.xtls.xray4magisk.util.theme.ThemeUtil;
 import rikka.core.res.ResourcesKt;
 import rikka.material.app.MaterialActivity;
 
+import java.util.HashSet;
+
 public class BaseActivity extends MaterialActivity {
+    public static final String MODULE_VERSION_CODE =ConfigManager.getModuleVersionCode();
+    public static final String MODULE_VERSION =ConfigManager.getModuleVersion();
+    public static final HashSet<Integer> UIDS =ProxyUtil.getAppidList();
+    public static boolean whiteListMode= ProxyUtil.isWhiteListMode();
+    public static boolean isProxying=ProxyUtil.isProxying();
     @Override
     public void onCreate(@NonNull Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        String moduleVersionCode = ConfigManager.getModuleVersionCode(getString(R.string.module_dir_name));
-        if ("".equals(moduleVersionCode)) {
+        if ("".equals(MODULE_VERSION_CODE)) {
             // module install check
             new AlertDialog.Builder(this)
                     .setMessage(R.string.need_install_module)
@@ -31,7 +37,7 @@ public class BaseActivity extends MaterialActivity {
                     .setCancelable(false)
                     .show();
         } else {
-            if (Integer.parseInt(moduleVersionCode) < Integer.parseInt(getString(R.string.min_module_version))) {
+            if (Integer.parseInt(MODULE_VERSION_CODE) < Integer.parseInt(getString(R.string.min_module_version))) {
                 // module version check
                 new AlertDialog.Builder(this)
                         .setMessage(String.format(getString(R.string.need_update_module), getString(R.string.min_module_version)))

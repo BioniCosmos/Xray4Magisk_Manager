@@ -28,6 +28,9 @@ public class ProxyUtil {
     }
 
     public static boolean setAppidList(HashSet<Integer> s, String mode) {
+        if(s.size()==0){
+            return setAppidList();
+        }
         StringBuilder cmd = new StringBuilder("echo \"");
         cmd.append(mode).append("\\n");
         for (int i : s) {
@@ -63,7 +66,7 @@ public class ProxyUtil {
 
     public static boolean start() {
         String cmd = "rm -rf /data/adb/modules/xray4magisk/disable";
-        if (MagiskHelper.isMagiskLite) {
+        if (MagiskHelper.IS_MAGISK_LITE) {
             cmd = "rm -rf /data/adb/lite_modules/xray4magisk/disable";
         }
         return MagiskHelper.execRootCmdSilent(cmd) != -1;
@@ -71,7 +74,7 @@ public class ProxyUtil {
 
     public static boolean stop() {
         String cmd = "touch /data/adb/modules/xray4magisk/disable";
-        if (MagiskHelper.isMagiskLite) {
+        if (MagiskHelper.IS_MAGISK_LITE) {
             cmd = "touch /data/adb/lite_modules/xray4magisk/disable";
         }
         return MagiskHelper.execRootCmdSilent(cmd) != -1;

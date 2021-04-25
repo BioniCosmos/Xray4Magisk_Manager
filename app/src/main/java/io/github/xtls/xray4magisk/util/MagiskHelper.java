@@ -8,7 +8,7 @@ import java.io.IOException;
 
 public final class MagiskHelper {
     private static final String TAG = "Xray4Magisk.MagiskHelper";
-    public static boolean isMagiskLite = "lite".equals(MagiskHelper.execRootCmd("magisk -v | grep -o lite"));
+    public static final boolean IS_MAGISK_LITE = "lite".equals(MagiskHelper.execRootCmd("magisk -v | grep -o lite"));
 
     public static String execRootCmd(String cmd) {
         StringBuilder result = new StringBuilder();

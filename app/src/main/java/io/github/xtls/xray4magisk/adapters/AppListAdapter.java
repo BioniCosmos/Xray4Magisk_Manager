@@ -27,6 +27,7 @@ import io.github.xtls.xray4magisk.App;
 import io.github.xtls.xray4magisk.ConfigManager;
 import io.github.xtls.xray4magisk.R;
 import io.github.xtls.xray4magisk.ui.activity.AppListActivity;
+import io.github.xtls.xray4magisk.ui.activity.base.BaseActivity;
 import io.github.xtls.xray4magisk.util.GlideApp;
 
 import io.github.xtls.xray4magisk.util.module.ProxyUtil;
@@ -38,7 +39,6 @@ import static android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS;
 
 @SuppressLint("NotifyDataSetChanged")
 public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHolder> implements Filterable {
-
     private final AppListActivity activity;
     private final PackageManager pm;
     private final SharedPreferences preferences;
@@ -47,18 +47,19 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
     private final SwitchBar.OnCheckedChangeListener switchBarOnCheckedChangeListener = new SwitchBar.OnCheckedChangeListener() {
         @Override
         public boolean onCheckedChanged(SwitchBar view, boolean isChecked) {
-            whiteListMode = isChecked;
+            BaseActivity.whiteListMode = isChecked;
             notifyDataSetChanged();
-            if (!ConfigManager.setProxyList(checkedList, whiteListMode)) {
+            if (!ProxyUtil.setAppidList(BaseActivity.UIDS, BaseActivity.whiteListMode ? "pick" : "bypass")) {
                 activity.makeSnackBar(R.string.failed_to_save_proxy_list, Snackbar.LENGTH_SHORT);
             }
+            flag = true;
             return true;
         }
     };
     private List<AppInfo> showList = new ArrayList<>();
     private ApplicationInfo selectedInfo;
     private boolean refreshing = false;
-    private boolean whiteListMode = true;
+    private boolean flag = false;
 
     public AppListAdapter(AppListActivity activity) {
         this.activity = activity;
@@ -79,7 +80,6 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         checkedList.clear();
         searchList.clear();
         showList.clear();
-        HashSet<Integer> proxyList = ConfigManager.getProxyList();
         HashSet<AppInfo> installedList = new HashSet<>();
         for (PackageInfo info : appList) {
             int uid = info.applicationInfo.uid;
@@ -92,7 +92,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
             appInfo.packageName = info.packageName;
             appInfo.applicationInfo = info.applicationInfo;
             installedList.add(appInfo);
-            if (proxyList.contains(uid)) {
+            if (BaseActivity.UIDS.contains(uid)) {
                 checkedList.add(appInfo);
             }
             if (shouldHideApp(appInfo)) {
@@ -304,26 +304,29 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
         activity.binding.progress.setIndeterminate(true);
         activity.binding.progress.setVisibility(View.VISIBLE);
 
-        whiteListMode = ProxyUtil.isWhiteListMode();
         activity.binding.masterSwitch.setOnCheckedChangeListener(null);
-        activity.binding.masterSwitch.setChecked(whiteListMode);
+        activity.binding.masterSwitch.setChecked(BaseActivity.whiteListMode);
         activity.binding.masterSwitch.setOnCheckedChangeListener(switchBarOnCheckedChangeListener);
         AsyncTask.THREAD_POOL_EXECUTOR.execute(this::loadApps);
     }
 
     protected void onCheckedChange(CompoundButton buttonView, boolean isChecked, AppInfo appInfo) {
         if (isChecked) {
-            int uid=appInfo.applicationInfo.uid;
-            for(AppInfo i:showList){
-                if(i.applicationInfo.uid==uid){
+            int uid = appInfo.applicationInfo.uid;
+            for (AppInfo i : showList) {
+                if (i.applicationInfo.uid == uid) {
                     checkedList.add(i);
                 }
             }
         } else {
-            int uid=appInfo.applicationInfo.uid;
+            int uid = appInfo.applicationInfo.uid;
             checkedList.removeIf(i -> i.applicationInfo.uid == uid);
         }
-        if (!ConfigManager.setProxyList(checkedList, whiteListMode)) {
+        BaseActivity.UIDS.clear();
+        for (AppInfo i : checkedList) {
+            BaseActivity.UIDS.add(i.applicationInfo.uid);
+        }
+        if (!ProxyUtil.setAppidList(BaseActivity.UIDS, BaseActivity.whiteListMode ? "pick" : "bypass")) {
             activity.makeSnackBar(R.string.failed_to_save_proxy_list, Snackbar.LENGTH_SHORT);
             if (!isChecked) {
                 checkedList.add(appInfo);
@@ -332,6 +335,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
             }
             buttonView.setChecked(!isChecked);
         }
+        flag = true;
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
@@ -383,8 +387,8 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHold
     }
 
     public boolean onBackPressed() {
-        if (ConfigManager.isProxying()) {
-            if (!ConfigManager.renewTproxy()) {
+        if (BaseActivity.isProxying && flag) {
+            if (!ProxyUtil.renewTproxy()) {
                 Toast.makeText(activity, activity.getString(R.string.failed_to_renew_tproxy_rules), Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(activity, activity.getString(R.string.succeeded_to_renew_tproxy_rules), Toast.LENGTH_LONG).show();
